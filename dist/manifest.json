@@ -1,0 +1,35 @@
+{
+  "name": "FileSync — P2P File Transfer",
+  "short_name": "FileSync",
+  "description": "Secure peer-to-peer file sharing over WiFi. No server, no database.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "categories": ["utilities", "productivity"],
+  "lang": "en",
+  "scope": "/",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Send Files",
+      "short_name": "Send",
+      "description": "Create an offer code to send files",
+      "url": "/?action=send",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "purpose": "any" }]
+    },
+    {
+      "name": "Receive Files",
+      "short_name": "Receive",
+      "description": "Enter an offer code to receive files",
+      "url": "/?action=receive",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "purpose": "any" }]
+    }
+  ]
+}

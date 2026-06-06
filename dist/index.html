@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>FileSync — P2P File Sharing</title>
+    <meta name="description" content="Secure peer-to-peer file sharing over WiFi. No server, no database." />
+    <meta name="theme-color" content="#020617" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="FileSync" />
+    <meta name="msapplication-TileColor" content="#1e40af" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-maskable-192.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { background: #020617; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+      #splash {
+        position: fixed; inset: 0; z-index: 9999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+      #splash.fade-out { opacity: 0; transform: scale(1.05); pointer-events: none; }
+      #splash.hidden { display: none !important; }
+      .splash-logo {
+        width: 120px; height: 120px;
+        animation: pulse 2s ease-in-out infinite;
+        filter: drop-shadow(0 0 30px rgba(51, 139, 255, 0.3));
+      }
+      @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+      .splash-title {
+        margin-top: 24px; font-size: 24px; font-weight: 700;
+        background: linear-gradient(135deg, #60a5fa, #22d3ee, #2dd4bf);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      }
+      .splash-subtitle { margin-top: 8px; color: rgba(255,255,255,0.4); font-size: 14px; }
+      .splash-loader {
+        margin-top: 40px; width: 40px; height: 40px;
+        border: 3px solid rgba(51,139,255,0.2); border-top-color: #3b82f6;
+        border-radius: 50%; animation: spin 1s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+    <script type="module" crossorigin src="/assets/index-DWsriDgd.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BTn50yCd.css">
+  <script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+  <body>
+    <div id="splash">
+      <svg class="splash-logo" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1e40af"/>
+            <stop offset="50%" stop-color="#0891b2"/>
+            <stop offset="100%" stop-color="#0d9488"/>
+          </linearGradient>
+          <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.25)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="6" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <rect width="512" height="512" rx="92" ry="92" fill="url(#bgGrad)"/>
+        <rect width="512" height="512" rx="92" ry="92" fill="url(#shine)"/>
+        <g stroke="white" stroke-width="22" fill="none" stroke-linecap="round" filter="url(#glow)">
+          <path d="M 196 220 A 80 80 0 0 1 316 220"/>
+          <path d="M 156 190 A 130 130 0 0 1 356 190"/>
+          <path d="M 116 160 A 180 180 0 0 1 396 160"/>
+        </g>
+        <circle cx="256" cy="220" r="22" fill="white" filter="url(#glow)"/>
+        <g stroke="white" stroke-width="16" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+          <line x1="256" y1="360" x2="256" y2="300"/>
+          <polyline points="220,328 256,292 292,328"/>
+          <line x1="256" y1="400" x2="256" y2="450"/>
+          <polyline points="220,432 256,458 292,432"/>
+        </g>
+      </svg>
+      <p class="splash-title">FileSync</p>
+      <p class="splash-subtitle">Secure P2P File Transfer</p>
+      <div class="splash-loader"></div>
+    </div>
+    <div id="root"></div>
+  </body>
+</html>
