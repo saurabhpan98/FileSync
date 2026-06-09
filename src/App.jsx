@@ -20,6 +20,7 @@ const I = {
   Key: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>,
   CopyPin: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>,
   Heart: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+  AlertTriangle: (p) => <svg {...p} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
 };
 
 /* ═══ Helpers ═══ */
@@ -91,21 +92,25 @@ const PinDisplay = ({ pin }) => (
 const PinInput = ({ value, onChange, onSubmit, disabled, error }) => {
   const refs = useRef([]);
 
+  // Focus first empty box on mount
+  useEffect(() => {
+    for (let i = 0; i < 6; i++) {
+      if (!value[i]) { refs.current[i]?.focus(); break; }
+    }
+  }, []);
+
   const handleChange = (i, e) => {
     const val = e.target.value.replace(/[^0-9]/g, '');
     if (!val) return;
-    const digits = val.split('');
+    // Take only the last typed digit (handles multi-char paste into one box gracefully)
+    const digit = val.slice(-1);
     const newVals = value.split('');
-    // Replace current position and distribute remaining digits forward
-    // Take only the last digit if multiple were pasted into one box
-    const relevantDigits = val.length > 1 ? digits : digits;
-    relevantDigits.forEach((d, di) => { if (i + di < 6) newVals[i + di] = d; });
+    newVals[i] = digit;
     const result = newVals.join('');
     onChange(result);
-    // Auto-focus next
-    const nextIdx = Math.min(i + relevantDigits.length, 5);
-    if (relevantDigits.length === 1 && nextIdx < 5 && refs.current[nextIdx]) {
-      refs.current[nextIdx].focus();
+    // Auto-focus next box
+    if (i < 5 && refs.current[i + 1]) {
+      refs.current[i + 1].focus();
     }
   };
 
@@ -151,7 +156,7 @@ const PinInput = ({ value, onChange, onSubmit, disabled, error }) => {
             ref={el => refs.current[i] = el}
             type="text"
             inputMode="numeric"
-            maxLength={6}
+            maxLength={1}
             value={value[i] || ''}
             onChange={(e) => handleChange(i, e)}
             onKeyDown={(e) => handleKeyDown(i, e)}
@@ -173,7 +178,7 @@ const PinInput = ({ value, onChange, onSubmit, disabled, error }) => {
    MAIN APP
    ═══════════════════════════════════════════════ */
 export default function App() {
-  const [step, setStep] = useState('home'); // home | sender | receiver | connected
+  const [step, setStep] = useState('home'); // home | sender | receiver
   const [role, setRole] = useState(''); // sender | receiver
   const [connState, setConnState] = useState('disconnected');
   const [pin, setPin] = useState('');
@@ -189,6 +194,7 @@ export default function App() {
   const connRef = useRef(null);
   const fileRef = useRef(null);
   const tidRef = useRef(0);
+  const wasEverConnectedRef = useRef(false); // tracks if we were connected at least once
 
   /* ─── PWA Install ─── */
   useEffect(() => {
@@ -223,7 +229,6 @@ export default function App() {
       setRole('receiver');
       setStep('receiver');
       setError('');
-      // Delay connection slightly to let the UI render
       setTimeout(() => {
         connectWithPin(urlPin);
       }, 500);
@@ -238,7 +243,12 @@ export default function App() {
     setError('');
 
     const pc = new PeerConnection(
-      (s) => { setConnState(s); if (s === 'connected') toast_('Connected! You can receive files now.'); if (s === 'error') { toast_('Connection lost'); setConnState('disconnected'); } },
+      (s) => {
+        setConnState(s);
+        if (s === 'connected') wasEverConnectedRef.current = true;
+        if (s === 'connected') toast_('Connected! You can receive files now.');
+        if (s === 'error') { toast_('Connection lost'); setConnState('disconnected'); }
+      },
       (file) => {
         const id = ++tidRef.current;
         setReceivedFiles(p => [{ id, name: file.name, size: file.size, type: file.type, blob: file, ts: Date.now() }, ...p]);
@@ -268,7 +278,12 @@ export default function App() {
     setError('');
 
     const pc = new PeerConnection(
-      (s) => { setConnState(s); if (s === 'connected') toast_('Connected! You can send files now.'); if (s === 'error') { toast_('Connection lost'); setConnState('disconnected'); } },
+      (s) => {
+        setConnState(s);
+        if (s === 'connected') wasEverConnectedRef.current = true;
+        if (s === 'connected') toast_('Connected! You can send files now.');
+        if (s === 'error') { toast_('Connection lost'); setConnState('disconnected'); }
+      },
       (file) => {
         const id = ++tidRef.current;
         setReceivedFiles(p => [{ id, name: file.name, size: file.size, type: file.type, blob: file, ts: Date.now() }, ...p]);
@@ -300,12 +315,10 @@ export default function App() {
     if (!pc || selectedFiles.length === 0) return;
     try {
       const results = await pc.sendFiles(selectedFiles);
-      // Use the returned fileIds to seed transfer state with name/size
       results.forEach(({ fileId, name, size }) => {
         setTransfers(p => ({ ...p, [fileId]: { ...(p[fileId] || {}), name, size, progress: 0, status: 'sending' } }));
       });
     } catch {
-      // Mark all selected files as error in transfers
       for (const f of selectedFiles) {
         const id = ++tidRef.current;
         setTransfers(p => ({ ...p, [id]: { name: f.name, size: f.size, progress: 0, status: 'error' } }));
@@ -320,11 +333,14 @@ export default function App() {
     document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
   };
 
+  /* ─── Disconnect (preserves received files) ─── */
   const disconnect = () => {
     if (connRef.current) { connRef.current.disconnect(); connRef.current = null; }
     setStep('home'); setRole(''); setConnState('disconnected');
     setPin(''); setInputPin(''); setError('');
-    setSelectedFiles([]); setTransfers({}); setReceivedFiles([]);
+    setSelectedFiles([]); setTransfers({});
+    // NOTE: receivedFiles intentionally preserved so user can still download
+    wasEverConnectedRef.current = false;
   };
 
   /* ─── Build QR URL with PIN ─── */
@@ -334,6 +350,7 @@ export default function App() {
   })();
 
   const activeCount = Object.values(transfers).filter(t => t.status === 'sending' || t.status === 'receiving').length;
+  const wasDisconnected = wasEverConnectedRef.current && connState === 'disconnected';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 text-white relative flex flex-col">
@@ -357,7 +374,7 @@ export default function App() {
               <button onClick={disconnect} className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors"><I.ArrowLeft /> Back</button>
             ) : <div />}
             <StatusBadge state={connState} />
-            {step === 'connected' && (
+            {connState === 'connected' && (
               <button onClick={disconnect} className="btn-danger text-xs">Disconnect</button>
             )}
           </div>
@@ -456,8 +473,24 @@ export default function App() {
           </div>
         )}
 
+        {/* ═══════ CONNECTION LOST (was connected, now disconnected) ═══════ */}
+        {wasDisconnected && (
+          <div className="animate-slide-up glass p-5 border-amber-500/30 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-amber-500/20 rounded-full flex items-center justify-center shrink-0">
+                <I.AlertTriangle className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-amber-300">Connection Lost</p>
+                <p className="text-xs text-amber-400/60">{role === 'sender' ? 'The receiver has disconnected.' : 'The sender has disconnected.'}</p>
+              </div>
+            </div>
+            <button onClick={disconnect} className="mt-3 w-full btn-secondary text-sm py-2">Back to Home</button>
+          </div>
+        )}
+
         {/* ═══════ CONNECTED: Transfer UI ═══════ */}
-        {step === 'sender' && connState === 'connected' || step === 'receiver' && connState === 'connected' ? (
+        {connState === 'connected' && (step === 'sender' || step === 'receiver') ? (
           <div className="animate-slide-up space-y-6">
             {/* Active transfers */}
             {activeCount > 0 && (
@@ -514,26 +547,28 @@ export default function App() {
                 </div>
               )}
             </div>
-
-            {/* Received files */}
-            {receivedFiles.length > 0 && (
-              <div className="glass p-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><I.Download className="w-5 h-5 text-green-400" /> Received</h3>
-                <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide">{receivedFiles.map(f => (
-                  <div key={f.id} className="flex items-center gap-3 bg-white/5 rounded-xl p-3 border border-white/10">
-                    <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center text-green-400 shrink-0"><I.Download className="w-4 h-4" /></div>
-                    <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">{f.name}</p><p className="text-xs text-white/40">{fmtSize(f.size)}</p></div>
-                    <div className="flex gap-2 shrink-0">
-                      <button onClick={() => downloadFile(f)} className="btn-secondary text-sm px-3 py-1.5 flex items-center gap-1"><I.Download className="w-4 h-4" /> Save</button>
-                      <button onClick={() => setReceivedFiles(p => p.filter(x => x.id !== f.id))} className="p-2 bg-white/5 rounded-lg hover:bg-red-500/20 hover:text-red-400 text-white/40 transition-all"><I.Trash /></button>
-                    </div>
-                  </div>
-                ))}</div>
-              </div>
-            )}
           </div>
         ) : null}
 
+        {/* ═══════ RECEIVED FILES (persists across disconnections) ═══════ */}
+        {receivedFiles.length > 0 && (
+          <div className="animate-slide-up glass p-6 mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2"><I.Download className="w-5 h-5 text-green-400" /> Received Files {wasDisconnected && <span className="text-xs font-normal text-amber-400/80 ml-1">— available for download</span>}</h3>
+              <button onClick={() => setReceivedFiles([])} className="text-xs text-white/30 hover:text-red-400 transition-colors px-2 py-1">Clear all</button>
+            </div>
+            <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide">{receivedFiles.map(f => (
+              <div key={f.id} className="flex items-center gap-3 bg-white/5 rounded-xl p-3 border border-white/10">
+                <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center text-green-400 shrink-0"><I.Download className="w-4 h-4" /></div>
+                <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">{f.name}</p><p className="text-xs text-white/40">{fmtSize(f.size)}</p></div>
+                <div className="flex gap-2 shrink-0">
+                  <button onClick={() => downloadFile(f)} className="btn-secondary text-sm px-3 py-1.5 flex items-center gap-1"><I.Download className="w-4 h-4" /> Save</button>
+                  <button onClick={() => setReceivedFiles(p => p.filter(x => x.id !== f.id))} className="p-2 bg-white/5 rounded-lg hover:bg-red-500/20 hover:text-red-400 text-white/40 transition-all"><I.Trash /></button>
+                </div>
+              </div>
+            ))}</div>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
