@@ -1,8 +1,8 @@
-# 🔐 FileSync — PIN-Based P2P File Transfer
+# 🔐 SwiftSync — QR & PIN-Based P2P File Transfer
 
-**FileSync** is a secure, serverless, peer-to-peer file transfer application. One device generates a 6-digit PIN, the other enters it (or scans a QR code), and files transfer directly via **WebRTC** — no servers, no databases, no uploads.
+**SwiftSync** is a secure, serverless, peer-to-peer file transfer application. One device generates a 6-digit PIN, the other enters it (or scans a QR code), and files transfer directly via **WebRTC** — no servers, no databases, no uploads.
 
-**[🚀 Live Demo](https://saurabhpan98.github.io/FileSync/)**
+**[🚀 Live Demo](https://saurabhpan98.github.io/SwiftSync/)**
 
 ---
 
@@ -242,15 +242,15 @@ FileSync/
 
 ## ❓ FAQ
 
-### Is FileSync truly serverless?
+### Is SwiftSync truly serverless?
 
 **Almost.** The file transfer itself is 100% peer-to-peer with no server involvement. However, the initial connection setup uses the **PeerJS cloud signaling server** to exchange WebRTC connection details. You can self-host your own PeerJS server for a fully self-contained setup.
 
-### Does FileSync work over the internet?
+### Does SwiftSync work over the internet?
 
 **Yes!** WebRTC uses ICE/STUN/TURN to establish connections across NATs and firewalls. For direct connections, both devices need to be reachable. If both are behind restrictive NATs, a TURN relay server is needed (PeerJS cloud provides this, or you can configure your own).
 
-### Does FileSync work on the same network (LAN)?
+### Does SwiftSync work on the same network (LAN)?
 
 **Yes, and it's even faster!** On the same network, WebRTC establishes a direct LAN connection with minimal latency.
 
@@ -266,7 +266,7 @@ If the WebRTC connection drops, the transfer is interrupted. You'll need to reco
 
 **No hard limit.** Since files are streamed in 14KB chunks, extremely large files (multi-GB) are possible. However, browser memory limits apply — both sender and receiver need enough RAM to hold the file. For very large files, consider using dedicated file transfer tools.
 
-### Can I use FileSync offline?
+### Can I use SwiftSync offline?
 
 **Partially.** Once the PWA is installed and the app shell is cached, the UI loads offline. However, an internet connection is needed for the PeerJS signaling during connection setup. After the WebRTC connection is established, files can transfer over LAN without internet.
 
