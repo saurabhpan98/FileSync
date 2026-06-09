@@ -98,7 +98,13 @@ export class PeerConnection {
 
   async sendFiles(fileList) {
     if (!this.conn?.open) throw new Error('Not connected');
-    for (const file of fileList) this._sendFile(file, crypto.randomUUID());
+    const ids = [];
+    for (const file of fileList) {
+      const fileId = crypto.randomUUID();
+      ids.push({ fileId, name: file.name, size: file.size });
+      this._sendFile(file, fileId);
+    }
+    return ids;
   }
 
   disconnect() {
@@ -161,6 +167,8 @@ export class PeerConnection {
           this.onProgress(this.currentReceiveId, {
             progress: Math.min((newTotal / exp.total) * 100, 100),
             status: 'receiving',
+            name: exp.name,
+            size: exp.total,
           });
         }
       }
@@ -178,7 +186,7 @@ export class PeerConnection {
       mimeType: mimeType,
     });
     console.log(`[FileSync] Receiving: ${msg.fileName} (${msg.fileSize} bytes, MIME: ${mimeType})`);
-    this.onProgress(msg.fileId, { progress: 0, status: 'receiving' });
+    this.onProgress(msg.fileId, { progress: 0, status: 'receiving', name: msg.fileName, size: msg.fileSize });
   }
 
   _finalizeFile(fileId) {
@@ -216,7 +224,7 @@ export class PeerConnection {
     this.receiveExpected.delete(fileId);
     this.receiveReceived.delete(fileId);
     this.currentReceiveId = null;
-    this.onProgress(fileId, { progress: 100, status: 'received' });
+    this.onProgress(fileId, { progress: 100, status: 'received', name: exp.name, size: actualSize });
   }
 
   _sendFile(file, fileId) {
@@ -233,7 +241,7 @@ export class PeerConnection {
     });
     this._sendFramed(TYPE_JSON, encoder.encode(jsonMsg));
 
-    this.onProgress(fileId, { progress: 0, status: 'sending' });
+    this.onProgress(fileId, { progress: 0, status: 'sending', name: file.name, size: file.size });
 
     file.arrayBuffer().then((ab) => {
       let offset = 0;
@@ -242,14 +250,14 @@ export class PeerConnection {
           // Send file-end marker
           const endMsg = JSON.stringify({ type: 'file-end', fileId });
           this._sendFramed(TYPE_JSON, encoder.encode(endMsg));
-          this.onProgress(fileId, { progress: 100, status: 'sent' });
+          this.onProgress(fileId, { progress: 100, status: 'sent', name: file.name, size: file.size });
           return;
         }
         const end = Math.min(offset + CHUNK_SIZE, ab.byteLength);
         const chunk = ab.slice(offset, end);
         this._sendFramed(TYPE_CHUNK, new Uint8Array(chunk));
         offset = end;
-        this.onProgress(fileId, { progress: (offset / ab.byteLength) * 100, status: 'sending' });
+        this.onProgress(fileId, { progress: (offset / ab.byteLength) * 100, status: 'sending', name: file.name, size: file.size });
         setTimeout(send, 3);
       };
       send();
